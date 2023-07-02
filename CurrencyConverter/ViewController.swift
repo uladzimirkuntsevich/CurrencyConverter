@@ -12,11 +12,39 @@ class ViewController: UIViewController {
     var textField = UITextField()
     var labelField = UILabel()
     
+    struct Json: Codable {
+//        var meta: LastUpdate
+        var data: Data
+    }
+    
+//    struct LastUpdate: Codable {
+//        var last_updated_at: String
+//    }
+    
+    struct Data: Codable {
+        var CAD: Double
+//        var EUR: Double
+//        var BYN: Double
+    }
+    
+    
+    var fetchedData: Json?
+    
+    var baseCurrency: String = "EUR"
+    var targetCurrency: String = "CAD"
+    
+    
+    private var apiKey = "qRz8ynlhgeGTlou1uK4cyv09CyuiZo7SNpu5bVa7"
+    private var baseUrl = "https://api.freecurrencyapi.com"
+    private var latetstEndpoint = "/v1/latest"
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         addSubviews()
         addElementConstraints()
         addStyles()
+        setupActions()
     }
     
     func addSubviews() {
@@ -48,6 +76,66 @@ class ViewController: UIViewController {
         [textField, labelField].forEach({$0.layer.cornerRadius = 5})
         [textField, labelField].forEach({$0.layer.borderColor = UIColor.black.cgColor})
     }
+    
+    func setupActions() {
+        textField.addTarget(self, action: #selector(textFieldEditing), for: .editingChanged)
+    }
+    
+    @objc func textFieldEditing() {
+        fetchData { (data, error) in
+            if let error = error {
+                print ("Error: \(error)")
+                DispatchQueue.main.async {
+                                self.showAlert(title: "Error", message: "There was a problem fetching the data.")
+                            }
+            } else if let data = data {
+                DispatchQueue.main.async {
+                    self.fetchedData = data
+                    self.targetCurrency = String(self.fetchedData?.data.CAD ?? 0.0)
+                }
+            }
+        }
+        if let text = textField.text, let value = Double(text), let targetValue = Double(targetCurrency) {
+            labelField.text = "\(value * targetValue)"
+        }
+    }
+    
+    
+    func fetchData (completion: @escaping (Json?, Error?) -> Void) {
+        
+        let urlWithParameters = baseUrl + latetstEndpoint + "?apikey=\(apiKey)&base_currency=\(baseCurrency )&currencies=\(targetCurrency)"
+        
+        guard let url = URL(string: urlWithParameters) else {
+            print("No URL has been specified")
+            return
+        }
+        
+        let request = URLRequest(url: url)
+        
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                completion(nil, error)
+            } else if let data = data {
+                do {
+                    let decoder = JSONDecoder()
+                    let dataObject = try decoder.decode(Json.self, from: data)
+                    completion(dataObject, nil)
+                } catch {
+                    completion(nil, error)
+                }
+            }
+        }
+        task.resume()
+    }
+    
+    
+    func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    
 
 }
 
