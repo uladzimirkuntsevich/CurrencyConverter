@@ -13,14 +13,10 @@ class ViewController: UIViewController {
     var labelField = UILabel()
     
     struct Json: Codable {
-//        var meta: LastUpdate
         var data: Data
     }
     
-//    struct LastUpdate: Codable {
-//        var last_updated_at: String
-//    }
-    
+
     struct Data: Codable {
         var CAD: Double
 //        var EUR: Double
