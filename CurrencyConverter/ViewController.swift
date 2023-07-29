@@ -32,6 +32,8 @@ class ViewController: UIViewController {
     
     var baseCurrency: String = "EUR"
     var targetCurrency: String = "CAD"
+    var conversionRate: Double?
+
     
     
     private var apiKey = "qRz8ynlhgeGTlou1uK4cyv09CyuiZo7SNpu5bVa7"
@@ -86,17 +88,17 @@ class ViewController: UIViewController {
             if let error = error {
                 print ("Error: \(error)")
                 DispatchQueue.main.async {
-                                self.showAlert(title: "Error", message: "There was a problem fetching the data.")
-                            }
+                    self.showAlert(title: "Error", message: "There was a problem fetching the data.")
+                }
             } else if let data = data {
                 DispatchQueue.main.async {
                     self.fetchedData = data
-                    self.targetCurrency = String(self.fetchedData?.data.CAD ?? 0.0)
+                    self.conversionRate = self.fetchedData?.data.CAD
                 }
             }
         }
-        if let text = textField.text, let value = Double(text), let targetValue = Double(targetCurrency) {
-            labelField.text = "\(value * targetValue)"
+        if let text = textField.text, let value = Double(text), let targetValue = conversionRate {
+            labelField.text = "\(round(value * targetValue * 100) / 100)"
         }
     }
     
